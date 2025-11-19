@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+
+  ai-duplicate:
+    build: ./ai-duplicate
+    container_name: ai-duplicate
+    ports:
+      - "9001:9001"
+
+  ai-llm:
+    build: ./ai-llm
+    container_name: ai-llm
+    ports:
+      - "9002:9002"
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+      - ai-duplicate
+      - ai-llm
+
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=citizen_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
