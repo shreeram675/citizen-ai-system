@@ -1,34 +1,39 @@
 from fastapi import FastAPI
-from database import Base, engine, SessionLocal
-from models import Report
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from schemas import ReportCreate, ReportOut
+from fastapi.middleware.cors import CORSMiddleware
+from database import engine, Base
+from routers import auth, reports, analytics, votes
 
-app = FastAPI()
+app = FastAPI(title="Citizen AI System API")
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# CORS
+origins = [
+    "http://localhost:3000",
+    "http://localhost:80",
+    "http://localhost",
+    "https://your-render-app.onrender.com",
+]
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include Routers
+app.include_router(auth.router)
+app.include_router(reports.router)
+app.include_router(votes.router)
+app.include_router(analytics.router)
+
+@app.on_event("startup")
+async def startup():
+    # Create tables on startup (for MVP)
+    async with engine.begin() as conn:
+        # await conn.run_sync(Base.metadata.drop_all) # Uncomment to reset DB
+        await conn.run_sync(Base.metadata.create_all)
 
 @app.get("/")
-def root():
-    return {"message": "Backend running"}
-
-@app.post("/reports", response_model=ReportOut)
-def create_report(data: ReportCreate, db: Session = Depends(get_db)):
-    report = Report(**data.dict())
-    db.add(report)
-    db.commit()
-    db.refresh(report)
-    return report
-
-@app.get("/reports")
-def all_reports(db: Session = Depends(get_db)):
-    return db.query(Report).all()
+def read_root():
+    return {"message": "Citizen AI System Backend is running"}

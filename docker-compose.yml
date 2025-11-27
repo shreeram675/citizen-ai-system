@@ -1,14 +1,20 @@
 version: "3.9"
 
 services:
-
   backend:
     build: ./backend
     container_name: backend
     ports:
       - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://admin:admin123@db:5432/citizen_ai
+      - AI_DUPLICATE_URL=http://ai-duplicate:9001
+      - AI_LLM_URL=http://ai-llm:9002
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - db
+      - ai-duplicate
+      - ai-llm
 
   frontend:
     build: ./frontend
@@ -27,6 +33,8 @@ services:
     container_name: ai-llm
     ports:
       - "9002:9002"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
 
   nginx:
     build: ./nginx
@@ -36,11 +44,9 @@ services:
     depends_on:
       - backend
       - frontend
-      - ai-duplicate
-      - ai-llm
 
   db:
-    image: postgis/postgis:15-3.4
+    image: ankane/pgvector:v0.5.1 # Includes PostGIS and pgvector
     container_name: postgres
     restart: always
     environment:

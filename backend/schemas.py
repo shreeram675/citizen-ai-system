@@ -1,14 +1,83 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field, validator
+from typing import Optional, List
+from datetime import datetime
+from models import UserRole, ReportStatus, ReportSeverity
 
-class ReportCreate(BaseModel):
+# User Schemas
+class UserBase(BaseModel):
+    email: EmailStr
+
+class UserCreate(UserBase):
+    password: str
+
+class UserResponse(UserBase):
+    id: int
+    role: UserRole
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Token Schemas
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+# Department & Team Schemas
+class DepartmentResponse(BaseModel):
+    id: int
+    name: str
+    slug: str
+    
+    class Config:
+        from_attributes = True
+
+class FieldTeamResponse(BaseModel):
+    id: int
+    name: str
+    status: str
+    current_lat: Optional[float]
+    current_lon: Optional[float]
+    department_id: int
+    
+    class Config:
+        from_attributes = True
+
+# Report Schemas
+class ReportBase(BaseModel):
     title: str
     description: str
     category: str
     latitude: float
     longitude: float
+    image_url: Optional[str] = None
 
-class ReportOut(ReportCreate):
+class ReportCreate(ReportBase):
+    pass
+
+class ReportResponse(ReportBase):
     id: int
-    status: str
+    status: ReportStatus
+    severity: ReportSeverity
+    upvotes: int
+    created_at: datetime
+    user_id: int
+    department_id: Optional[int]
+    assigned_team_id: Optional[int]
+    resolution_image_url: Optional[str]
+    citizen_feedback: Optional[str]
+    
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class ReportUpdate(BaseModel):
+    status: Optional[ReportStatus] = None
+    severity: Optional[ReportSeverity] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    resolution_image_url: Optional[str] = None
+    citizen_feedback: Optional[str] = None
+    assigned_team_id: Optional[int] = None
