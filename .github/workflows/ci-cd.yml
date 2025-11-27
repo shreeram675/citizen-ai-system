@@ -58,9 +58,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Check secret presence (non-sensitive)
+      run: |
+        if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]; then echo "DOCKERHUB_USERNAME is NOT set"; else echo "DOCKERHUB_USERNAME is set"; fi
+        if [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then echo "DOCKERHUB_TOKEN is NOT set"; else echo "DOCKERHUB_TOKEN is set"; fi
+
     - name: Login to Docker Hub
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
+        registry: docker.io
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     
@@ -69,6 +75,4 @@ jobs:
       with:
         context: ./backend
         push: true
-        tags: user/citizen-backend:latest
-    
-    # Add similar steps for other services
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/citizen-backend:latest
